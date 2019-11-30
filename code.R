@@ -55,11 +55,10 @@ for(i in base_url){
 write_csv(df_final, "df_final.csv")
 
 #-----------------------------------------------------
-# 일베 사이트 크롤링
+# 사이트 크롤링
 #-----------------------------------------------------
 url.mlb <- "http://mlbpark.donga.com/mp/b.php?p=1&m=list&b=bullpen&query=&select=&user="
 h.mlb <- read_html(url.mlb)
-
 
 title <- h.mlb %>% 
   html_nodes("span.bullpen") %>% 
@@ -69,18 +68,63 @@ nick <- h.mlb %>%
   html_nodes("td.t_left > span.nick") %>% 
   html_text()
 
-nick <- str_remove_all(nick, "담당자")
-nick <- str_remove_all(nick, "엠팍제휴팀")
-
+nick <- nick[-c(1:4)]
 
 dates <- h.mlb %>% 
-  html_nodes("td > span.date")
+  html_nodes("td > span.date") %>% 
+  html_text()
+dates <- dates[-c(1:4)]
 
 view <- h.mlb %>% 
   html_nodes("span.viewV") %>% 
   html_text()
 
-#container > div.contents > div.left_cont > div.tbl_box > table > tbody > tr:nth-child(5) > td:nth-child(4) > span
+# 1페이지에서 p=1
+# 2페이지 p=31
+
+no <- seq(1, 1000, by = 30)
+m.url <- str_c("http://mlbpark.donga.com/mp/b.php?p=1&m=list&b=bullpen&query=&select=&user=")
+
+m.url <- str_c("http://mlbpark.donga.com/mp/b.php?p=", 
+      no,
+      "&m=list&b=bullpen&query=&select=&user=")
+#-----------------------------------
+
+mlb.final <- NULL
+for(k in m.url){
+  print(k)
+  
+  h.mlb <- read_html(k)
+  
+  title <- h.mlb %>% 
+    html_nodes("span.bullpen") %>% 
+    html_text()
+  
+  nick <- h.mlb %>% 
+    html_nodes("td.t_left > span.nick") %>% 
+    html_text()
+  
+  nick <- nick[-c(1:4)]
+  
+  dates <- h.mlb %>% 
+    html_nodes("td > span.date") %>% 
+    html_text()
+  dates <- dates[-c(1:4)]
+  
+  view <- h.mlb %>% 
+    html_nodes("span.viewV") %>% 
+    html_text()
+  
+  mlb.final2 <- data.frame(title, nick, dates, view)
+  mlb.final <- rbind(mlb.final, mlb.final2)
+  
+  Sys.sleep(10.0)
+  
+}
+
+
+
+
 #-----------------------------------------------------
 # 기상청 크롤링 
 #-----------------------------------------------------
